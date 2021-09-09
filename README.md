@@ -1,6 +1,18 @@
-# Adonis fullstack application
+# Pocker Planning API based on Adonisjs
+Frontend repo (React): https://github.com/attikos/pointing-poker
 
-This is the fullstack boilerplate for AdonisJs, it comes pre-configured with.
+# Init
+
+- copy `.env.example` as `.env` and configure DB connect
+- setup PostgreSQL 13 ([Windows](https://www.postgresql.org/download/windows/))
+- `npm i`
+- `npm start` or `npm run dev` (support hot reloading)
+- install Adonis CLI `npm i -g @adonisjs/cli`
+- run migration: `adonis migration:run`
+
+# Adonisjs
+
+This is the fullstack AdonisJs.
 
 1. Bodyparser
 2. Session
@@ -10,22 +22,3 @@ This is the fullstack boilerplate for AdonisJs, it comes pre-configured with.
 6. Edge template engine
 7. Lucid ORM
 8. Migrations and seeds
-
-## Setup
-
-Use the adonis command to install the blueprint
-
-```bash
-adonis new yardstick
-```
-
-or manually clone the repo and then run `npm install`.
-
-
-### Migrations
-
-Run the following command to run startup migrations.
-
-```js
-adonis migration:run
-```
