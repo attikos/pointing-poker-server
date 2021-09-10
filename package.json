@@ -35,6 +35,8 @@
     "@adonisjs/shield": "^1.0.8",
     "@adonisjs/websocket": "^1.0.12",
     "@adonisjs/websocket-client": "^1.0.9",
+    "camelize": "^1.0.0",
+    "decamelize-keys-deep": "^0.1.1",
     "pg": "^8.5.1",
     "uid-generator": "^2.0.0",
     "url-parse": "^1.5.1"

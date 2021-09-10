@@ -3,6 +3,7 @@
 const UIDGenerator = require('uid-generator');
 const uidgen = new UIDGenerator(32);
 const User = use('App/Models/User')
+const { decamelize } = require('../../../utils/camelize.js');
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
@@ -14,10 +15,10 @@ const User = use('App/Models/User')
 class UserController {
     // API for PP
     async checkToken({request, response}) {
-        let {token} = request.all();
+        let { token } = request.all()
 
         if ( !token ) {
-            token = uidgen.generateSync();
+            token = uidgen.generateSync()
 
             // TODO create user with token
         }
@@ -25,8 +26,56 @@ class UserController {
         try {
             console.log('token: ', token)
         } catch (error) {
-            console.error(error);
+            console.error(error)
         }
+
+        return response.json({ success: 1, token })
+    }
+
+    async lobby({request, response}) {
+        let {
+            token,
+            first_name,
+            last_name,
+            is_diller,
+            is_player
+        } = decamelize( request.all() )
+
+        if ( token ) {
+            user = await User.findBy('token', token);
+        }
+        else {
+            token = uidgen.generateSync();
+
+            // TODO create user with token
+
+            try {
+                user = await User.create({
+                    token,
+                    first_name,
+                    last_name,
+                    is_diller,
+                    is_player
+                })
+            }
+            catch (error) {
+                console.log('error', error)
+
+                return response.json({ errorMessage : 'Account already exist' })
+            }
+
+            return response.json({
+                success : 1,
+                user    : user.prepared(),
+                message : 'Registration Successful!'
+            })
+        }
+
+        return response.json({
+            success : 1,
+            user    : user.prepared(),
+            message : 'Registration Successful!'
+        })
 
         return response.json({ success: 1, token })
     }
