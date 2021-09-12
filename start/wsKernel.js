@@ -1,6 +1,4 @@
-'use strict'
-
-const Ws = use('Ws')
+const Ws = use('Ws');
 
 /*
 |--------------------------------------------------------------------------
@@ -13,8 +11,7 @@ const Ws = use('Ws')
 const globalMiddleware = [
     'Adonis/Middleware/Session',
     'App/Middleware/CustomAuth',
-]
-
+];
 
 /*
 |--------------------------------------------------------------------------
@@ -35,9 +32,9 @@ const globalMiddleware = [
 const namedMiddleware = {
     // auth: 'Adonis/Middleware/Auth',
     // auth: 'App/Middleware/CustomAuth',
-    guest: 'Adonis/Middleware/AllowGuestOnly'
-}
+    guest: 'Adonis/Middleware/AllowGuestOnly',
+};
 
 Ws
-  .registerGlobal(globalMiddleware)
-  .registerNamed(namedMiddleware)
+    .registerGlobal(globalMiddleware)
+    .registerNamed(namedMiddleware);

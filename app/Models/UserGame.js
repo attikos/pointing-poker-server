@@ -2,13 +2,13 @@
 const Model = use('Model');
 
 class UserGame extends Model {
-    user() {
-        return this.hasOne('App/Models/User');
-    }
+    // user() {
+    //     return this.hasMany('App/Models/User');
+    // }
 
-    game() {
-        return this.hasOne('App/Models/Game');
-    }
+    // game() {
+    //     return this.hasOne('App/Models/Game');
+    // }
 }
 
 module.exports = UserGame;

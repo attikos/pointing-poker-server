@@ -14,11 +14,11 @@ class Game extends Model {
         });
     }
 
-    members() {
-        return this
-            .belongsToMany('App/Models/UserGame')
-            .pivotTable('user_game');
-    }
+    // members() {
+    //     return this
+    //         .belongsToMany('App/Models/UserGame')
+    //         .pivotTable('user_game');
+    // }
 }
 
 module.exports = Game;

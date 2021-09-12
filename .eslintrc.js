@@ -15,6 +15,7 @@ module.exports = {
     },
     globals: {
         use: true,
+        Exception: true,
     },
     parserOptions: {
         ecmaVersion: 12,

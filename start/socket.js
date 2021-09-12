@@ -1,5 +1,3 @@
-'use strict'
-
 /*
 |--------------------------------------------------------------------------
 | Websocket
@@ -13,8 +11,8 @@
 |
 */
 
-const Ws = use('Ws')
+const Ws = use('Ws');
 
 Ws
-    .channel('pocker', 'GameController')
-    // .middleware(['auth'])
+    .channel('pocker', 'GameController');
+// .middleware(['auth'])
