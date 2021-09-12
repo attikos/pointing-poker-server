@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "adonis serve --dev",
+    "dev": "adonis serve --dev --debug",
     "dev:nodemon": "nodemon --watch app/**/*.* --watch start/**/*.* --watch config/**/*.* --watch resources/**/*.* --watch public/**/*.* --watch .env -x node server.js",
     "test": "node ace test"
   },

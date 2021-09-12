@@ -3,7 +3,7 @@ const Schema = use('Schema');
 
 class IssueSchema extends Schema {
     up() {
-        this.raw('DROP TYPE issue_priority_type');
+        this.raw('DROP TYPE IF EXISTS issue_priority_type');
 
         this.create('issue', (table) => {
             table.increments();

@@ -1,8 +1,6 @@
 const UIDGenerator = require('uid-generator');
 
 const uidgen = new UIDGenerator(32);
-const User = use('App/Models/User');
-const { decamelize } = require('../../../utils/camelize');
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
@@ -13,68 +11,70 @@ const { decamelize } = require('../../../utils/camelize');
  */
 class UserController {
     // API for PP
-    static async checkToken({ request, response }) {
+    async checkToken({ request, response }) {
         let { token } = request.all();
 
         if (!token) {
             token = uidgen.generateSync();
         }
+        console.log('token: ', token);
 
         // try {
-        //     console.log('token: ', token)
+        //     console.log('token: ', token);
         // } catch (error) {
-        //     console.error(error)
+        //     console.error(error);
+        //     throw error;
         // }
 
         return response.json({ success: 1, token });
     }
 
-    static async lobby({ request, response }) {
-        let user;
-        let {
-            token,
-            firstName,
-            lastName,
-            isDiller,
-            isPlayer,
-            gameNiceId,
-        } = decamelize(request.all());
+    // static async lobby({ request, response }) {
+    //     let user;
+    //     let {
+    //         token,
+    //         firstName,
+    //         lastName,
+    //         isDiller,
+    //         isPlayer,
+    //         gameNiceId,
+    //     } = decamelize(request.all());
 
-        if (token) {
-            user = await User.findBy('token', token);
-        }
+    //     if (token) {
+    //         user = await User.findBy('token', token);
+    //     }
 
-        if (!token || !user) {
-            token = uidgen.generateSync();
+    //     if (!token || !user) {
+    //         token = uidgen.generateSync();
 
-            try {
-                user = await User.create({
-                    token,
-                    firstName,
-                    lastName,
-                    isDiller,
-                    isPlayer,
-                    gameNiceId,
-                });
-            } catch (error) {
-                console.log('error', error);
+    //         try {
+    //             user = await User.create({
+    //                 token,
+    //                 firstName,
+    //                 lastName,
+    //                 isDiller,
+    //                 isPlayer,
+    //                 gameNiceId,
+    //             });
+    //         } catch (error) {
+    //             console.log('error', error);
 
-                return response.json({ errorMessage: 'Account already exist' });
-            }
+    //             return response.json({ errorMessage: 'Account already exist' });
+    //         }
 
-            return response.json({
-                success: 1,
-                user: user.prepared(),
-                message: 'Registration Successful!',
-            });
-        }
+    //         return response.json({
+    //             success: 1,
+    //             user: user.prepared(),
+    //             message: 'Registration Successful!',
+    //         });
+    //     }
 
-        return response.json({
-            success: 1,
-            user: user.prepared(),
-            message: 'Registration Successful!',
-        });
-    }
+    //     return response.json({
+    //         success: 1,
+    //         user: user.prepared(),
+    //         message: 'Registration Successful!',
+    //     });
+    // }
 
     // async register({ request, auth, response }) {
     //     const { email, password, passwordConfirm } = request.all();

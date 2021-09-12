@@ -1,12 +1,12 @@
-import camelize from 'camelize';
-import decamelizeKeys from 'decamelize-keys-deep';
-import decamelizeString from 'decamelize';
+const camelize = require('camelize');
+const decamelizeKeys = require('decamelize-keys-deep');
+const decamelizeString = require('decamelize');
 
 // /**
 //  * Умеет в строки и в объекты
 //  * @param {object|string}
 //  */
-const decamelize = function (...args) {
+const decamelize = (...args) => {
     if (typeof args[0] === 'string') {
         return decamelizeString(args[0]);
     }
@@ -18,7 +18,9 @@ const decamelize = function (...args) {
     return decamelizeKeys(...args);
 };
 
-export {
+const exportData = {
     camelize,
     decamelize,
 };
+
+module.exports = exportData;

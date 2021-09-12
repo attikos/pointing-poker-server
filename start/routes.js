@@ -1,5 +1,3 @@
-'use strict'
-
 /*
 |--------------------------------------------------------------------------
 | Routes
@@ -14,27 +12,27 @@
 */
 
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
-const Route = use('Route')
+const Route = use('Route');
 
-Route.post('user', 'UserController.index')
+Route.post('user', 'UserController.index');
 
 Route
-  .get('users/:id', 'UserController.show')
-  .middleware('auth')
+    .get('users/:id', 'UserController.show')
+    .middleware('auth');
 
-Route.post('login', 'UserController.login')
-Route.post('logout', 'UserController.logout')
-Route.post('register', 'UserController.register')
-Route.post('check', 'UserController.check')
+Route.post('login', 'UserController.login');
+Route.post('logout', 'UserController.logout');
+Route.post('register', 'UserController.register');
+Route.post('check', 'UserController.check');
 
 // API for planning pocker
-Route.post('check-token', 'UserController.checkToken')
+Route.post('check-token', 'UserController.checkToken');
 //
 
 Route
     .post('post', 'GameController.post')
-    .middleware('auth')
+    .middleware('auth');
 
 Route
     .post('list', 'GameController.list')
-    .middleware('auth')
+    .middleware('auth');

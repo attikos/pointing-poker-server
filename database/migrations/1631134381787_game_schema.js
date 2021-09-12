@@ -3,7 +3,7 @@ const Schema = use('Schema');
 
 class GameSchema extends Schema {
     up() {
-        this.raw('DROP TYPE game_status_type');
+        this.raw('DROP TYPE IF EXISTS game_status_type');
 
         this.create('game', (table) => {
             table.increments();

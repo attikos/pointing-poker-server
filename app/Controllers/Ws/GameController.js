@@ -1,8 +1,9 @@
-const MiddlewareBase = require('@adonisjs/middleware-base');
 const { camelize, decamelize } = require('../../../utils/camelize');
 
-const User = MiddlewareBase.use('App/Models/User');
-const Game = MiddlewareBase.use('App/Models/Game');
+const Database = use('Database');
+const User = use('App/Models/User');
+const Game = use('App/Models/Game');
+const UserGame = use('App/Models/UserGame');
 
 // async function saveMessage({ data, auth }) {
 //     const { content, type } = data;
@@ -26,11 +27,13 @@ const Game = MiddlewareBase.use('App/Models/Game');
 // }
 
 class GameController {
-    constructor({ socket, request, auth }) {
+    constructor({ socket, request, token }) {
         this.socket = socket;
         this.request = request;
-        // this.auth = auth;
-        this.token = token;
+        // this.token = token;
+
+        console.log('this.token 2', this.token);
+        console.log(socket.topic);
 
         // create user / update user
 
@@ -45,64 +48,78 @@ class GameController {
     // }
     }
 
-    static async onNewGame(data) {
-        const { form, game_nice_id } = decamelize(data);
-        let result = {};
-        let user;
-        let game;
-
-        let errors = User.validate(form);
-
-        if (errors) {
-            result = { errors };
-
-            this.socket.emit('newGame', camelize(result));
-        }
-
-        user = User.findBy('token', this.token);
-        const userParams = { ...form, token: this.token };
-
-        if (user) {
-            user.fill(userParams);
-            await user.save();
-        } else {
-            user = await User.create(userParams);
-            await user.reload();
-        }
-
-        // It's a player
-        if (game_nice_id) {
-            game = Game.findBy('nice_id', game_nice_id);
-
-            if (!game) {
-                result = {
-                    errors: {
-                        game_nice_id: 'Wrong game ID!',
-                    },
-                };
-                this.socket.emit('newGame', camelize(result));
-                return;
-            }
-        } else {
-            // it's Diller
-            // create game with user_id
-            game = await Game.create({ user_id: user.id });
-            game.user_id = user.id;
-            game.save();
-        }
-
-        user = new User();
-
-        // get new members list - members
-        const members = [];
-
-        result = {
-            success: 1,
-        };
-
-        this.socket.emit('newGame', camelize(result));
-        this.socket.broadcastToAll('members', camelize(members));
+    onError(data) {
+        console.log('data', data);
+        // same as: socket.on('error')
     }
+
+    // async onNewGame(data) {
+    //     const trx = await Database.beginTransaction();
+    //     const { form, game_nice_id } = decamelize(data);
+    //     let result = {};
+    //     let user;
+    //     let game;
+
+    //     let errors = User.validate(form);
+
+    //     if (errors) {
+    //         result = { errors };
+
+    //         this.socket.emit('newGame', camelize(result));
+    //     }
+
+    //     user = User.findBy('token', this.token);
+    //     const userParams = { ...form, token: this.token };
+
+    //     if (user) {
+    //         user.fill(userParams);
+    //         await user.save(trx);
+    //     } else {
+    //         user = await User.create(userParams, trx);
+    //         await user.reload();
+    //     }
+
+    //     // It's a player
+    //     if (game_nice_id) {
+    //         game = Game.findBy('nice_id', game_nice_id);
+
+    //         if (!game) {
+    //             result = {
+    //                 errors: {
+    //                     game_nice_id: 'Wrong game ID!',
+    //                 },
+    //             };
+
+    //             await trx.rollback();
+
+    //             this.socket.emit('newGame', camelize(result));
+    //             return;
+    //         }
+    //     } else {
+    //         // it's Diller
+    //         // create game with user_id
+    //         game = await Game.create({ user_id: user.id }, trx);
+    //         game.user_id = user.id;
+    //         await game.save();
+    //     }
+
+    //     // get new members list - members
+    //     const members = await UserGame
+    //         .query(trx)
+    //         .where('game_id', game.id)
+    //         .fetch();
+
+    //     console.log('members toJSON', members.toJSON());
+
+    //     result = {
+    //         success: 1,
+    //     };
+
+    //     await trx.commit();
+
+    //     this.socket.emit('newGame', camelize(result));
+    //     this.socket.broadcastToAll('members', camelize(members));
+    // }
 
     // async onMessage(data) {
     //     const message = await saveMessage({ data, auth: this.auth });
