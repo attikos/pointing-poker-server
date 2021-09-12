@@ -22,9 +22,11 @@ class CustomAuth {
     async wsHandle (ctx, next) {
         const { token } = ctx.request.get()
 
-        ctx.auth = {
-            token
-        }
+        // ctx.auth = {
+        //     token
+        // }
+
+        ctx.token = token;
 
         if ( !token ) {
             console.error('Token not found')

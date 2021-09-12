@@ -1,17 +1,15 @@
-'use strict'
-
 /** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')} */
-const Model = use('Model')
+const Model = use('Model');
 
 class Message extends Model {
-    static boot () {
-        super.boot()
+    static boot() {
+        super.boot();
 
         this.addHook('beforeSave', async (messageInstance) => {
             if (messageInstance.dirty.content) {
-                messageInstance.uploaded = true
+                messageInstance.uploaded = true;
             }
-        })
+        });
     }
 
     // static formatDates (field, value) {
@@ -22,12 +20,12 @@ class Message extends Model {
     //     return super.formatDates(field, value)
     // }
 
-    static castDates (field, value) {
+    static castDates(field, value) {
         if (field === 'created_at' || field === 'updated_at') {
-            return value.format()
+            return value.format();
         }
 
-        return super.formatDates(field, value)
+        return super.formatDates(field, value);
     }
 
     // prepared() {
@@ -47,4 +45,4 @@ class Message extends Model {
     // }
 }
 
-module.exports = Message
+module.exports = Message;
