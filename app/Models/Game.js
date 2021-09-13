@@ -1,6 +1,4 @@
-const UIDGenerator = require('uid-generator');
-
-const uidgen = new UIDGenerator(6, UIDGenerator.BASE36);
+const { generateNiceId } = require('../../utils/random-string');
 
 /** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')} */
 const Model = use('Model');
@@ -10,7 +8,7 @@ class Game extends Model {
         super.boot();
 
         this.addHook('beforeSave', async (gameInstance) => {
-            gameInstance.nice_id = uidgen.generateSync();
+            gameInstance.nice_id = generateNiceId();
         });
     }
 
