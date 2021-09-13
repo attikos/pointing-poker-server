@@ -3,17 +3,17 @@ const Schema = use('Schema');
 
 class UserIssueSchema extends Schema {
     up() {
-        this.create('user_issue', (table) => {
+        this.create('user_issues', (table) => {
             table.increments();
-            table.integer('issue_id').notNullable().references('id').inTable('issue');
-            table.integer('user_id').notNullable().references('id').inTable('user');
+            table.integer('issue_id').notNullable().references('id').inTable('issues');
+            table.integer('user_id').notNullable().references('id').inTable('users');
             table.string('score', 3).notNullable();
             table.timestamps();
         });
     }
 
     down() {
-        this.drop('user_issue');
+        this.drop('user_issues');
     }
 }
 

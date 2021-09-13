@@ -3,16 +3,16 @@ const Schema = use('Schema');
 
 class UserGameSchema extends Schema {
     up() {
-        this.create('user_game', (table) => {
+        this.create('user_games', (table) => {
             table.increments();
-            table.integer('user_id').notNullable().references('id').inTable('user');
-            table.integer('game_id').notNullable().references('id').inTable('game');
+            table.integer('user_id').notNullable().references('id').inTable('users');
+            table.integer('game_id').notNullable().references('id').inTable('games');
             table.timestamps();
         });
     }
 
     down() {
-        this.drop('user_game');
+        this.drop('user_games');
     }
 }
 

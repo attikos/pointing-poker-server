@@ -3,9 +3,10 @@ const Schema = use('Schema');
 
 class UserSchema extends Schema {
     up() {
-        this.create('user', (table) => {
+        this.create('users', (table) => {
             table.increments();
             table.string('token', 255).notNullable().unique().index();
+            table.string('nice_id', 6).notNullable().unique().index();
             table.string('first_name', 255).notNullable();
             table.string('last_name', 255).notNullable();
             table.boolean('is_diller').defaultTo(false);
@@ -18,7 +19,7 @@ class UserSchema extends Schema {
     }
 
     down() {
-        this.drop('user');
+        this.drop('users');
     }
 }
 

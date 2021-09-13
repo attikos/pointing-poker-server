@@ -27,6 +27,7 @@ Route.post('check', 'UserController.check');
 
 // API for planning pocker
 Route.post('check-token', 'UserController.checkToken');
+Route.post('new-game', 'UserController.newGame');
 //
 
 Route

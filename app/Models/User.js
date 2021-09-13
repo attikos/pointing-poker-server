@@ -1,7 +1,6 @@
-const UIDGenerator = require('uid-generator');
+const { generateNiceId } = require('../../utils/random-string');
 
-// const { validateAll } = use('Validator');
-const uidgen = new UIDGenerator(8);
+const { validateAll } = use('Validator');
 
 /** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')} */
 const Model = use('Model');
@@ -15,39 +14,39 @@ class User extends Model {
          * it to the database.
          */
         this.addHook('beforeSave', async (userInstance) => {
-            const niceId = uidgen.generateSync();
+            const niceId = generateNiceId();
 
             userInstance.nice_id = niceId;
         });
     }
 
-    // static validate(form) {
-    //     return false; // TODO
-    //     // let {
-    //     //     token,
-    //     //     first_name,
-    //     //     last_name,
-    //     //     is_diller,
-    //     //     is_player,
-    //     //     game_nice_id,
-    //     // } = form
+    static async validate(form) {
+        // return false; // TODO
+        // let {
+        //     token,
+        //     first_name,
+        //     last_name,
+        //     is_diller,
+        //     is_player,
+        //     game_nice_id,
+        // } = form
 
-    //     const rules = {
-    //         first_name: 'required|email|unique:users,email',
-    //     };
+        const rules = {
+            first_name: 'required|alpha',
+        };
 
-    //     const messages = {
-    //         first_name: 'Wrong first name',
-    //     };
+        const messages = {
+            first_name: 'Wrong first name',
+        };
 
-    //     let validation = validateAll(form, rules, messages);
+        let validation = await validateAll(form, rules, messages);
 
-    //     if (validation.fails()) {
-    //         return validation.messages();
-    //     }
+        if (validation.fails()) {
+            return validation.messages();
+        }
 
-    //     return false;
-    // }
+        return false;
+    }
 
     prepared() {
         const user = {};
