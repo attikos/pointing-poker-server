@@ -1,6 +1,6 @@
 const UIDGenerator = require('uid-generator');
 
-const { validateAll } = use('Validator');
+// const { validateAll } = use('Validator');
 const uidgen = new UIDGenerator(8);
 
 /** @type {typeof import('@adonisjs/lucid/src/Lucid/Model')} */

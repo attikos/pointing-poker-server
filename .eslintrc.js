@@ -24,8 +24,9 @@ module.exports = {
     },
     rules: {
         camelcase: 0,
-        'no-param-reassign': 0,
         indent: ['error', 4],
+        'no-plusplus': 0,
+        'no-param-reassign': 0,
         'prefer-const': 0,
         'class-methods-use-this': 0,
     },
