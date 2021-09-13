@@ -5,9 +5,9 @@ class IssueSchema extends Schema {
     up() {
         this.raw('DROP TYPE IF EXISTS issue_priority_type');
 
-        this.create('issue', (table) => {
+        this.create('issues', (table) => {
             table.increments();
-            table.integer('game_id').references('id').inTable('game');
+            table.integer('game_id').references('id').inTable('games');
             table.boolean('is_current').defaultTo(false);
             table.string('title', 512).notNullable();
             table.string('link', 512);
@@ -17,7 +17,7 @@ class IssueSchema extends Schema {
     }
 
     down() {
-        this.drop('issue');
+        this.drop('issues');
         this.raw('DROP TYPE issue_priority_type');
     }
 }

@@ -14,5 +14,6 @@
 const Ws = use('Ws');
 
 Ws
-    .channel('pocker', 'GameController');
+    // .channel('pocker', 'GameController');
+    .channel('room:*', 'GameController');
 // .middleware(['auth'])

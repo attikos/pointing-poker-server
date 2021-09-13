@@ -16,6 +16,7 @@ const providers = [
     '@adonisjs/cors/providers/CorsProvider',
     //   '@adonisjs/shield/providers/ShieldProvider',
     '@adonisjs/session/providers/SessionProvider',
+    '@adonisjs/validator/providers/ValidatorProvider',
     // '@adonisjs/auth/providers/AuthProvider',
     '@adonisjs/websocket/providers/WsProvider',
 ];
