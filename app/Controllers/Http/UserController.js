@@ -46,13 +46,12 @@ class UserController {
         }
 
         user = await User.findBy('token', token);
-        const userParams = { ...user.toJSON(), ...form };
 
         if (user) {
-            user.fill(userParams);
+            user.fill({ ...user.toJSON(), ...form });
             await user.save(trx);
         } else {
-            user = await User.create(userParams, trx);
+            user = await User.create({ ...form, token }, trx);
             // await user.reload();
         }
 
@@ -73,12 +72,11 @@ class UserController {
             // it's Diller creating the new game
             // create game with user_id
             game = await Game.create({ user_id: user.id }, trx);
-            game.user_id = user.id;
             await game.save();
         }
 
-        const userGame = await UserGame.create({ user_id: user.id, game_id: game.id }, trx);
-        await userGame.save();
+        // const userGame = await UserGame.create({ user_id: user.id, game_id: game.id }, trx);
+        // await userGame.save();
 
         await trx.commit();
 
@@ -89,15 +87,16 @@ class UserController {
         //     .where('game_id', game.id)
         //     .groupBy('user_id');
 
-        const members2 = await Database
-            .select('users.*')
-            .from('users')
-            .leftJoin('user_games', 'users.id', 'user_games.user_id')
-            .where('user_games.game_id', game.id)
-            .groupBy('users.id');
+        // const members2 = await Database
+        //     .select('users.*')
+        //     .from('users')
+        //     .leftJoin('user_games', 'users.id', 'user_games.user_id')
+        //     .where('user_games.game_id', game.id)
+        //     .groupBy('users.id');
 
-        console.log('members2', members2);
+        // console.log('members2', members2);
         console.log('game.id', game.id);
+        console.log('game.nice_id', game.nice_id);
 
         result = {
             success: 1,
