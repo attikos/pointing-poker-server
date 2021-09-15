@@ -5,7 +5,6 @@ const Database = use('Database');
 const User = use('App/Models/User');
 const Game = use('App/Models/Game');
 const UserGame = use('App/Models/UserGame');
-
 class GameController {
     constructor({
         socket, request, token,
@@ -15,23 +14,64 @@ class GameController {
         this.token = token;
         this.roomId = getRoomId(socket.topic);
 
-        console.log('this.token', this.token);
-        console.log('A new subscription for room topic', this.roomId);
+        if (!this.roomId) {
+            this.socket.emit('error', 'Room is required!');
+            this.socket.close();
+        }
 
-        // socket.emit('error', 'Ошибка');
-        // socket.close();
+        this.connected();
+    }
 
-        // create user / update user
+    async connected() {
+        try {
+            const result = await this.getAllData();
 
-        // return success, game
-        // if ( user && game ) {
+            if (result.user && result.game) {
+                const userGame = await UserGame.create({
+                    user_id: result.user.id,
+                    game_id: result.game.id,
+                });
+                await userGame.save();
+            }
 
-        // socket.emit('all', { game, members, issues, scores})
-        // socket.emit('game', game)
-        // socket.emit('members', members)
-        // socket.emit('issues', issues)
-        // socket.emit('scores', scores)
-        // }
+            await this.socket.emit('all-data', result);
+
+            console.log('this.token', this.token);
+            console.log('A new subscription for room topic', this.roomId);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async getAllData() {
+        const payload = {};
+
+        payload.user = await User.findBy('token', this.token);
+        payload.game = await Game.findBy('nice_id', this.roomId);
+
+        payload.members = await Database
+            .select('users.*')
+            .from('users')
+            .leftJoin('user_games', 'users.id', 'user_games.user_id')
+            .where('user_games.game_id', payload.game.id)
+            .groupBy('users.id');
+
+        payload.issues = await Database
+            .select('issues.*')
+            .from('issues')
+            .leftJoin('user_scores', 'issues.id', 'user_scores.user_id')
+            .where('user_scores.user_id', payload.user.id)
+            .groupBy('issues.id');
+
+        payload.scores = await Database
+            .select('user_scores.*')
+            .from('user_scores')
+            .leftJoin('issues', 'issues.id', 'user_scores.issue_id')
+            .where('issues.game_id', payload.game.id)
+            .groupBy('user_scores.id');
+
+        return payload;
     }
 
     async onNewGame(data) {
@@ -60,7 +100,7 @@ class GameController {
             await user.reload();
         }
 
-        // It's a player
+        // It's a Player
         if (game_nice_id) {
             game = Game.findBy('nice_id', game_nice_id);
 
@@ -77,14 +117,14 @@ class GameController {
                 return;
             }
         } else {
-            // it's Diller
+            // it's a Diller
             // create game with user_id
             game = await Game.create({ user_id: user.id }, trx);
             game.user_id = user.id;
             await game.save();
         }
 
-        // get new members list - members
+        // get a new members
         const members = await UserGame
             .query(trx)
             .where('game_id', game.id)
@@ -120,7 +160,22 @@ class GameController {
     //     this.socket.broadcastToAll('viewed', messageIdList);
     // }
 
-    onClose() {
+    async onClose() {
+        const user = await User.findBy('token', this.token);
+        const game = await Game.findBy('nice_id', this.roomId);
+
+        const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
+
+        if (userGame) {
+            await userGame.delete();
+        }
+
+        // await Database
+        //     .table('user_games')
+        //     .where('user_id', user.id)
+        //     .where('game_id', game.id)
+        //     .delete();
+
         // TODO - delete user from game
         console.log('Closing subscription for room topic', this.socket.topic);
     }

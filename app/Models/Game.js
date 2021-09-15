@@ -7,7 +7,7 @@ class Game extends Model {
     static boot() {
         super.boot();
 
-        this.addHook('beforeSave', async (gameInstance) => {
+        this.addHook('beforeCreate', (gameInstance) => {
             gameInstance.nice_id = generateNiceId();
         });
     }
