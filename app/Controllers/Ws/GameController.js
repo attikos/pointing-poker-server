@@ -142,24 +142,6 @@ class GameController {
         this.socket.broadcastToAll('members', camelize(members));
     }
 
-    // async onMessage(data) {
-    //     const message = await saveMessage({ data, auth: this.auth });
-
-    //     message.participantId = message.user_id;
-
-    //     this.socket.broadcastToAll('message', message);
-    // }
-
-    // async onViewed(messageIdList) {
-    //     await Message
-    //         .query()
-    //         .whereIn('id', messageIdList)
-    //         .andWhere('viewed', false)
-    //         .update({ viewed: true });
-
-    //     this.socket.broadcastToAll('viewed', messageIdList);
-    // }
-
     async onClose() {
         const user = await User.findBy('token', this.token);
         const game = await Game.findBy('nice_id', this.roomId);
@@ -170,13 +152,6 @@ class GameController {
             await userGame.delete();
         }
 
-        // await Database
-        //     .table('user_games')
-        //     .where('user_id', user.id)
-        //     .where('game_id', game.id)
-        //     .delete();
-
-        // TODO - delete user from game
         console.log('Closing subscription for room topic', this.socket.topic);
     }
 }
