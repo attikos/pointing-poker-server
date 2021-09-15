@@ -11,12 +11,6 @@ class Game extends Model {
             gameInstance.nice_id = generateNiceId();
         });
     }
-
-    // members() {
-    //     return this
-    //         .belongsToMany('App/Models/UserGame')
-    //         .pivotTable('user_game');
-    // }
 }
 
 module.exports = Game;
