@@ -10,7 +10,7 @@ class UserSchema extends Schema {
             table.string('first_name', 255).notNullable();
             table.string('last_name', 255).notNullable();
             table.boolean('is_diller').defaultTo(false);
-            table.boolean('is_player').defaultTo(false);
+            table.boolean('is_observer').defaultTo(false);
             table.string('job', 255);
             // table.integer('game_id').references('id').inTable('game')
             // table.integer('image_id').references('id').inTable('image')

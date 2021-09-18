@@ -39,6 +39,7 @@
     "camelize": "^1.0.0",
     "decamelize": "^5.0.0",
     "decamelize-keys-deep": "^0.1.1",
+    "lodash": "^4.17.21",
     "pg": "^8.5.1",
     "uid-generator": "^2.0.0",
     "url-parse": "^1.5.1"

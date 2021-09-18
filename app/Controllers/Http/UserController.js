@@ -1,3 +1,5 @@
+const _ = require('lodash');
+
 const UIDGenerator = require('uid-generator');
 const { camelize, decamelize } = require('../../../utils/camelize');
 
@@ -16,15 +18,24 @@ const uidgen = new UIDGenerator(32);
  */
 class UserController {
     // API for PP
-    async checkToken({ request, response }) {
-        let { token } = request.all();
+    async checkGameId({ request, response }) {
+        let { game_nice_id } = decamelize(request.all());
+        let res;
 
-        if (!token) {
-            token = uidgen.generateSync();
+        const game = await Game.findBy('nice_id', game_nice_id);
+
+        if (!game) {
+            res = {
+                success: 1,
+                errors: {
+                    game_nice_id: 'Wrong Game ID',
+                },
+            };
+        } else {
+            res = { success: 1 };
         }
-        console.log('token: ', token);
 
-        return response.json({ success: 1, token });
+        return response.json(camelize(res));
     }
 
     async newGame({ request, response }) {
@@ -34,10 +45,18 @@ class UserController {
         let user;
         let game;
 
-        let errors = await User.validate(form);
+        const formPicked = _.pick(form, [
+            'first_name',
+            'last_name',
+            'is_diller',
+            'is_observer',
+            'job',
+        ]);
+
+        let errors = await User.validate(formPicked);
 
         if (errors) {
-            return response.json({ errors });
+            return response.json(camelize({ errors }));
         }
 
         if (!token) {
@@ -47,10 +66,10 @@ class UserController {
         user = await User.findBy('token', token);
 
         if (user) {
-            user.fill({ ...user.toJSON(), ...form });
+            user.fill({ ...user.toJSON(), ...formPicked });
             await user.save(trx);
         } else {
-            user = await User.create({ ...form, token }, trx);
+            user = await User.create({ ...formPicked, token }, trx);
             // await user.reload();
         }
 
@@ -65,7 +84,7 @@ class UserController {
 
                 await trx.rollback();
 
-                return response.json({ errors });
+                return response.json(camelize({ errors }));
             }
         } else {
             // it's Diller creating the new game

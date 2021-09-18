@@ -9,6 +9,7 @@ class IssueSchema extends Schema {
             table.increments();
             table.integer('game_id').references('id').inTable('games');
             table.boolean('is_current').defaultTo(false);
+            table.boolean('is_finished').defaultTo(false);
             table.string('title', 512).notNullable();
             table.string('link', 512);
             table.enu('priority', ['low', 'middle', 'high'], { useNative: true, existingType: false, enumName: 'issue_priority_type' }).defaultTo('middle');
