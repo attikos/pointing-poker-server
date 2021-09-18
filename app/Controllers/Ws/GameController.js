@@ -19,7 +19,7 @@ class GameController {
             this.socket.close();
         }
 
-        this.connected();
+        // this.connected();
     }
 
     async connected() {
@@ -35,7 +35,7 @@ class GameController {
                 await userGame.save();
             }
 
-            const allData = await this.getAllData(game.id);
+            const allData = await this.getAllDataByGameId(game.id);
 
             this.socket.broadcastToAll('all-data', camelize(allData));
             this.socket.emit('user', camelize(user));
@@ -74,7 +74,19 @@ class GameController {
             .groupBy('users.id');
     }
 
-    async getAllData(game_id) {
+    async getAllData() {
+        const game = await this.getGame();
+
+        if (!game) {
+            return false;
+        }
+
+        const result = await this.getAllDataByGameId(game.id) || {};
+
+        return camelize({ ...result, game });
+    }
+
+    async getAllDataByGameId(game_id) {
         const result = {};
 
         result.scores = await Database
@@ -93,6 +105,17 @@ class GameController {
         result.members = await this.getMembers(game_id);
 
         return result;
+    }
+
+    async onGetAllData() {
+        const result = await this.getAllData();
+        console.log('get-all-data', result);
+
+        if (!result) {
+            return;
+        }
+
+        this.socket.emit('all-data', camelize(result));
     }
 
     // async onNewGame(data) {
