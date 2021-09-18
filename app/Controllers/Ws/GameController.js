@@ -102,6 +102,11 @@ class GameController {
             .where('game_id', game_id)
             .groupBy('issues.id');
 
+        result.usersIssues = {};
+        result.issues.forEach((issue) => {
+            result.usersIssues[issue.user_id] = issue;
+        });
+
         result.members = await this.getMembers(game_id);
 
         return result;
