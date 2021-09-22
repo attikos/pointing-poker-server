@@ -21,7 +21,8 @@ class User extends Model {
     }
 
     static async validate(form) {
-        // return false; // TODO
+        return false; // TODO
+
         // let {
         //     token,
         //     first_name,
