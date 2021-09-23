@@ -7,7 +7,7 @@ const Database = use('Database');
 const User = use('App/Models/User');
 const Game = use('App/Models/Game');
 
-const uidgen = new UIDGenerator(32);
+const uidgen = new UIDGenerator(64);
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */

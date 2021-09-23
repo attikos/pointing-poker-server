@@ -114,13 +114,24 @@ class GameController {
 
     async onGetAllData() {
         const result = await this.getAllData();
-        console.log('get-all-data', result);
+        console.log('getAllData', result);
 
         if (!result) {
             return;
         }
 
         this.socket.emit('all-data', camelize(result));
+    }
+
+    async onGetUser() {
+        const result = await this.getUser();
+        console.log('getUser', result);
+
+        if (!result) {
+            return;
+        }
+
+        this.socket.emit('user', camelize(result));
     }
 
     // async onNewGame(data) {
