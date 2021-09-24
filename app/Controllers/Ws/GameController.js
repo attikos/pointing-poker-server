@@ -5,6 +5,9 @@ const Database = use('Database');
 const User = use('App/Models/User');
 const Game = use('App/Models/Game');
 const UserGame = use('App/Models/UserGame');
+const UserScore = use('App/Models/UserScore');
+const Issue = use('App/Models/Issue');
+
 class GameController {
     constructor({
         socket, request, token,
@@ -18,13 +21,11 @@ class GameController {
             this.socket.emit('error', 'Room is required!');
             this.socket.close();
         }
-
-        // this.connected();
     }
 
     async connected() {
         try {
-            const game = await this.getGame();
+            const game = await this.getGame(true);
             const user = await this.getUser();
 
             if (user && game) {
@@ -45,21 +46,29 @@ class GameController {
         }
     }
 
-    async getUser() {
+    async getUser(isJson) {
         const user = await User.findBy('token', this.token);
 
         if (user) {
-            return user.toJSON();
+            if (isJson) {
+                return user.toJSON();
+            }
+
+            return user;
         }
 
         return false;
     }
 
-    async getGame() {
+    async getGame(isJson) {
         const game = await Game.findBy('nice_id', this.roomId);
 
         if (game) {
-            return game.toJSON();
+            if (isJson) {
+                return game.toJSON();
+            }
+
+            return game;
         }
 
         return false;
@@ -83,7 +92,7 @@ class GameController {
 
         const result = await this.getAllDataByGameId(game.id) || {};
 
-        return camelize({ ...result, game });
+        return camelize({ ...result, game: game.toJSON() });
     }
 
     async getAllDataByGameId(game_id) {
@@ -112,26 +121,154 @@ class GameController {
         return result;
     }
 
-    async onGetAllData() {
+    async sendFullData() {
         const result = await this.getAllData();
-        console.log('getAllData', result);
 
         if (!result) {
             return;
         }
 
-        this.socket.emit('all-data', camelize(result));
+        this.socket.broadcastToAll('all-data', camelize(result));
+    }
+
+    onGetAllData() {
+        this.sendFullData();
     }
 
     async onGetUser() {
         const result = await this.getUser();
-        console.log('getUser', result);
 
         if (!result) {
             return;
         }
 
         this.socket.emit('user', camelize(result));
+    }
+
+    async onStartGame() {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        game.status = 'game';
+        await game.save();
+        return this.sendFullData();
+    }
+
+    async onCancelGame() {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return this.onClose();
+        }
+
+        game.status = 'result';
+        await game.save();
+
+        return this.sendFullData();
+    }
+
+    async onStartRound() {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        const issue = Issue.first({ game_id: game.id, is_current: true });
+
+        if (issue) {
+            issue.status = 'processing';
+            await issue.save();
+
+            return this.sendFullData();
+        }
+
+        return false;
+    }
+
+    async onStopRound() {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        const issue = Issue.first({ game_id: game.id, is_current: true, status: 'processing' });
+
+        if (!issue) {
+            return false;
+        }
+
+        const userScore = await UserScore.first({ issue_id: issue.id });
+        const issueStatus = userScore ? 'finished' : 'new';
+
+        if (userScore) {
+            issue.status = issueStatus;
+            await issue.save();
+
+            return this.sendFullData();
+        }
+
+        return false;
+    }
+
+    async onSetIssueAsCurrent(flag) {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        const issue = Issue.first({ game_id: game.id, is_current: true, status: 'processing' });
+
+        if (!issue) {
+            return false;
+        }
+
+        issue.is_current = !!flag;
+        await issue.save();
+
+        return this.sendFullData();
+    }
+
+    async onDeleteUser(userNiceId) {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        const player = await User.findBy('nice_id', userNiceId);
+        // const user = await User.query(trx).where('username','virk).first()
+
+        if (player) {
+            await player.delete();
+
+            return this.sendFullData();
+        }
+
+        return false;
+    }
+
+    async onAddScore() {
+        return false;
+    }
+
+    async onAddIssue() {
+        return false;
+    }
+
+    async onDeleteIssue() {
+        return false;
     }
 
     // async onNewGame(data) {
@@ -213,6 +350,8 @@ class GameController {
         }
 
         console.log('Closing subscription for room topic', this.socket.topic);
+
+        return this.sendFullData();
     }
 }
 
