@@ -275,8 +275,10 @@ class GameController {
             'id',
         ]);
 
+        console.log('formPicked', formPicked);
+
         try {
-            const issue = await Issue.Issue(formPicked);
+            const issue = await Issue.create(formPicked);
             await issue.save();
         } catch (error) {
             console.error(error);
