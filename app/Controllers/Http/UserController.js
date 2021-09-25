@@ -6,6 +6,7 @@ const { camelize, decamelize } = require('../../../utils/camelize');
 const Database = use('Database');
 const User = use('App/Models/User');
 const Game = use('App/Models/Game');
+const UserGame = use('App/Models/UserGame');
 
 const uidgen = new UIDGenerator(64);
 
@@ -17,7 +18,67 @@ const uidgen = new UIDGenerator(64);
  * Resourceful controller for interacting with users
  */
 class UserController {
-    // API for PP
+    async restoreSession({ request, response }) {
+        let { game_nice_id, token } = decamelize(request.all());
+        let res;
+
+        if (!token) {
+            res = {
+                success: 1,
+                errors: {
+                    token: 'Token is required',
+                },
+            };
+
+            return response.json(camelize(res));
+        }
+
+        const user = await User.findBy('token', token);
+
+        if (!user) {
+            res = {
+                success: 1,
+                errors: {
+                    token: 'Session not found',
+                },
+            };
+
+            return response.json(camelize(res));
+        }
+
+        let game = await Game.findBy('user_id', user.id);
+
+        if (!game) {
+            res = {
+                success: 1,
+                errors: {
+                    game_nice_id: 'Session not found',
+                },
+            };
+
+            return response.json(camelize(res));
+        }
+
+        if (game_nice_id !== game.nice_id) {
+            res = {
+                success: 1,
+                errors: {
+                    game_nice_id: 'Wrong Game ID',
+                },
+            };
+
+            return response.json(camelize(res));
+        }
+
+        res = {
+            success: 1,
+            token,
+            roomId: game.nice_id, // game_nice_id === roomId
+        };
+
+        return response.json(camelize(res));
+    }
+
     async checkGameId({ request, response }) {
         let { game_nice_id } = decamelize(request.all());
         let res;

@@ -14,26 +14,6 @@
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route');
 
-Route.post('user', 'UserController.index');
-
-Route
-    .get('users/:id', 'UserController.show')
-    .middleware('auth');
-
-Route.post('login', 'UserController.login');
-Route.post('logout', 'UserController.logout');
-Route.post('register', 'UserController.register');
-Route.post('check', 'UserController.check');
-
-// API for planning pocker
 Route.post('check-game-id', 'UserController.checkGameId');
 Route.post('new-game', 'UserController.newGame');
-//
-
-Route
-    .post('post', 'GameController.post')
-    .middleware('auth');
-
-Route
-    .post('list', 'GameController.list')
-    .middleware('auth');
+Route.post('restore-session', 'UserController.restoreSession');
