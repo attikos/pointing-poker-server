@@ -265,9 +265,15 @@ class GameController {
     }
 
     async onAddIssue(form) {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
         const formPicked = _.pick(form, [
             'title',
-            'nice_id',
             'link',
             'is_current',
             'priority',
@@ -275,22 +281,44 @@ class GameController {
             'id',
         ]);
 
-        console.log('formPicked', formPicked);
+        if (formPicked.id) {
+            const issue = await Issue.findBy('id', formPicked.id);
 
-        try {
-            const issue = await Issue.create(formPicked);
-            await issue.save();
-        } catch (error) {
-            console.error(error);
-            this.socket.emit('error', { addIssue: error });
-            return false;
+            if (issue && issue.game_id === game.id) {
+                await issue.fill(formPicked);
+                await issue.save();
+            }
+        } else {
+            const issueParams = { ...formPicked, game_id: game.id };
+
+            try {
+                const issue = await Issue.create(issueParams);
+                await issue.save();
+            } catch (error) {
+                console.error(error);
+                this.socket.emit('error', { addIssue: error });
+                return false;
+            }
         }
 
         return this.sendFullData();
     }
 
-    async onDeleteIssue() {
-        return false;
+    async onDeleteIssue(issueId) {
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        if (game.user_id !== user.id) {
+            return false;
+        }
+
+        const issue = await Issue.findBy('id', issueId);
+
+        if (issue && issue.game_id === game.id) {
+            await issue.delete();
+        }
+
+        return this.sendFullData();
     }
 
     // async onNewGame(data) {
