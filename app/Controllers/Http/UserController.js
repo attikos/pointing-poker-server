@@ -6,7 +6,6 @@ const { camelize, decamelize } = require('../../../utils/camelize');
 const Database = use('Database');
 const User = use('App/Models/User');
 const Game = use('App/Models/Game');
-const UserGame = use('App/Models/UserGame');
 
 const uidgen = new UIDGenerator(64);
 
