@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const { camelize } = require('../../../utils/camelize');
 const { getRoomId } = require('../../../utils/getRoomId');
 
@@ -263,8 +264,27 @@ class GameController {
         return false;
     }
 
-    async onAddIssue() {
-        return false;
+    async onAddIssue(form) {
+        const formPicked = _.pick(form, [
+            'title',
+            'nice_id',
+            'link',
+            'is_current',
+            'priority',
+            'status',
+            'id',
+        ]);
+
+        try {
+            const issue = await Issue.Issue(formPicked);
+            await issue.save();
+        } catch (error) {
+            console.error(error);
+            this.socket.emit('error', { addIssue: error });
+            return false;
+        }
+
+        return this.sendFullData();
     }
 
     async onDeleteIssue() {
