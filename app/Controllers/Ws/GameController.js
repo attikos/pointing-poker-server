@@ -35,6 +35,7 @@ class GameController {
                     game_id: game.id,
                 });
                 await userGame.save();
+                await userGame.reload();
             }
 
             const allData = await this.getAllDataByGameId(game.id);
@@ -100,11 +101,12 @@ class GameController {
         const result = {};
 
         result.scores = await Database
-            .select('issues.*')
+            .select('user_scores.*')
             .from('issues')
             .leftJoin('user_scores', 'issues.id', 'user_scores.issue_id')
             .where('issues.game_id', game_id)
-            .groupBy('issues.id');
+            .where('user_scores.score', '!=', null)
+            .groupBy('user_scores.id');
 
         result.issues = await Database
             .select('*')
@@ -112,9 +114,11 @@ class GameController {
             .where('game_id', game_id)
             .groupBy('issues.id');
 
-        result.usersIssues = {};
-        result.issues.forEach((issue) => {
-            result.usersIssues[issue.user_id] = issue;
+        result.usersIssues = {}; // TODO выпилить на фронте и здесь
+
+        result.usersScores = {};
+        result.scores.forEach((score) => {
+            result.usersScores[score.user_id] = score;
         });
 
         result.members = await this.getMembers(game_id);
@@ -137,7 +141,7 @@ class GameController {
     }
 
     async onGetUser() {
-        const result = await this.getUser();
+        const result = await this.getUser(true);
 
         if (!result) {
             return;
@@ -156,6 +160,8 @@ class GameController {
 
         game.status = 'game';
         await game.save();
+        await game.reload();
+
         return this.sendFullData();
     }
 
@@ -169,6 +175,7 @@ class GameController {
 
         game.status = 'result';
         await game.save();
+        await game.reload();
 
         return this.sendFullData();
     }
@@ -186,6 +193,7 @@ class GameController {
         if (issue) {
             issue.status = 'processing';
             await issue.save();
+            await issue.reload();
 
             return this.sendFullData();
         }
@@ -213,6 +221,7 @@ class GameController {
         if (userScore) {
             issue.status = issueStatus;
             await issue.save();
+            await issue.reload();
 
             return this.sendFullData();
         }
@@ -236,6 +245,7 @@ class GameController {
 
         issue.is_current = !!flag;
         await issue.save();
+        await issue.reload();
 
         return this.sendFullData();
     }
@@ -253,6 +263,7 @@ class GameController {
 
         if (player) {
             await player.delete();
+            // await player.reload();
 
             return this.sendFullData();
         }
@@ -287,6 +298,7 @@ class GameController {
             if (issue && issue.game_id === game.id) {
                 await issue.fill(formPicked);
                 await issue.save();
+                await issue.reload();
             }
         } else {
             const issueParams = { ...formPicked, game_id: game.id };
@@ -294,6 +306,7 @@ class GameController {
             try {
                 const issue = await Issue.create(issueParams);
                 await issue.save();
+                await issue.reload();
             } catch (error) {
                 console.error(error);
                 this.socket.emit('error', { addIssue: error });

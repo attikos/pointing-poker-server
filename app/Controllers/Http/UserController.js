@@ -45,7 +45,12 @@ class UserController {
             return response.json(camelize(res));
         }
 
-        let game = await Game.findBy('user_id', user.id);
+        let gameParams = { user_id: user.id };
+        if (game_nice_id) {
+            gameParams.nice_id = game_nice_id;
+        }
+
+        let game = await Game.findBy(gameParams);
 
         if (!game) {
             res = {
