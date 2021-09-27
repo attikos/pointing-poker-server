@@ -113,7 +113,6 @@ class UserController {
         const formPicked = _.pick(form, [
             'first_name',
             'last_name',
-            'is_diller',
             'is_observer',
             'job',
         ]);
@@ -135,7 +134,7 @@ class UserController {
             await user.save(trx);
         } else {
             user = await User.create({ ...formPicked, token }, trx);
-            // await user.reload();
+            await user.reload();
         }
 
         // It's a player trying to connect into the game
@@ -155,7 +154,13 @@ class UserController {
             // it's Diller creating the new game
             // create game with user_id
             game = await Game.create({ user_id: user.id }, trx);
-            await game.save();
+            await game.save(trx);
+
+            user.is_diller = !game_nice_id;
+            await user.save(trx);
+
+            await game.reload();
+            await user.reload();
         }
 
         await trx.commit();

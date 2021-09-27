@@ -27,7 +27,6 @@ class User extends Model {
         //     token,
         //     first_name,
         //     last_name,
-        //     is_diller,
         //     is_player,
         //     game_nice_id,
         // } = form
