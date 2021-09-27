@@ -155,13 +155,12 @@ class UserController {
             // create game with user_id
             game = await Game.create({ user_id: user.id }, trx);
             await game.save(trx);
-
-            user.is_diller = !game_nice_id;
-            await user.save(trx);
-
             await game.reload();
-            await user.reload();
         }
+
+        user.is_diller = !game_nice_id;
+        await user.save(trx);
+        await user.reload();
 
         await trx.commit();
 
