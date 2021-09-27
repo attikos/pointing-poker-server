@@ -81,6 +81,8 @@ class UserController {
             roomId: game.nice_id, // game_nice_id === roomId
         };
 
+        console.log('game restored');
+
         return response.json(camelize(res));
     }
 
@@ -132,11 +134,12 @@ class UserController {
             user = await User.findBy('token', token);
 
             if (user) {
-                user.fill({ ...user.toJSON(), ...formPicked });
+                user.merge(formPicked);
                 await user.save(trx);
             } else {
                 user = await User.create({ ...formPicked, token }, trx);
                 // await user.reload();
+                await user.save(trx);
             }
 
             // It's a player trying to connect into the game

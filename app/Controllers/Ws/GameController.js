@@ -27,17 +27,28 @@ class GameController {
     }
 
     async userConnected() {
+        console.log('userConnected');
+
         try {
-            const game = await this.getGame(true);
+            const game = await this.getGame();
             const user = await this.getUser();
 
-            if (user && game) {
-                const userGame = await UserGame.create({
-                    user_id: user.id,
-                    game_id: game.id,
+            this.game = game;
+            this.user = user;
+
+            let userGame = await UserGame.findBy({
+                user_id: this.user.id,
+                game_id: this.game.id,
+            });
+
+            console.log('userGame:', userGame);
+
+            if (!userGame && this.user && this.game) {
+                userGame = await UserGame.create({
+                    user_id: this.user.id,
+                    game_id: this.game.id,
                 });
-                // await userGame.save();
-                await userGame.reload();
+                await userGame.save();
             }
         } catch (error) {
             console.error(error);
@@ -157,7 +168,6 @@ class GameController {
 
         game.status = 'game';
         await game.save();
-        await game.reload();
 
         return this.sendFullData();
     }
@@ -170,13 +180,18 @@ class GameController {
             return this.onClose();
         }
 
-        this.dillerExitGame();
-
         game.status = 'result';
         await game.save();
-        // await game.reload();
 
-        return this.sendFullData();
+        const allData = await this.getAllData();
+
+        if (allData) {
+            this.socket.broadcast('all-data', camelize(allData));
+        }
+
+        this.socket.emit('close');
+
+        return true;
     }
 
     async onStartRound() {
@@ -192,7 +207,7 @@ class GameController {
         if (issue) {
             issue.status = 'processing';
             await issue.save();
-            await issue.reload();
+            // await issue.reload();
 
             return this.sendFullData();
         }
@@ -220,7 +235,7 @@ class GameController {
         if (userScore) {
             issue.status = issueStatus;
             await issue.save();
-            await issue.reload();
+            // await issue.reload();
 
             return this.sendFullData();
         }
@@ -261,7 +276,7 @@ class GameController {
 
         issue.is_current = params.flag === undefined ? true : params.flag;
         await issue.save();
-        await issue.reload();
+        // await issue.reload();
 
         return this.sendFullData();
     }
@@ -312,7 +327,7 @@ class GameController {
             if (issue && issue.game_id === game.id) {
                 await issue.fill(formPicked);
                 await issue.save();
-                await issue.reload();
+                // await issue.reload();
             }
         } else {
             const issueParams = { ...formPicked, game_id: game.id };
@@ -320,7 +335,7 @@ class GameController {
             try {
                 const issue = await Issue.create(issueParams);
                 await issue.save();
-                await issue.reload();
+                // await issue.reload();
             } catch (error) {
                 console.error(error);
                 this.socket.emit('error', { addIssue: error });
