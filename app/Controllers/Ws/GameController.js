@@ -22,9 +22,11 @@ class GameController {
             this.socket.emit('error', 'Room is required!');
             this.socket.close();
         }
+
+        this.userConnected();
     }
 
-    async connected() {
+    async userConnected() {
         try {
             const game = await this.getGame(true);
             const user = await this.getUser();
@@ -34,14 +36,9 @@ class GameController {
                     user_id: user.id,
                     game_id: game.id,
                 });
-                await userGame.save();
+                // await userGame.save();
                 await userGame.reload();
             }
-
-            const allData = await this.getAllDataByGameId(game.id);
-
-            this.socket.broadcastToAll('all-data', camelize(allData));
-            this.socket.emit('user', camelize(user));
         } catch (error) {
             console.error(error);
             throw error;
@@ -170,8 +167,10 @@ class GameController {
         const user = await this.getUser();
 
         if (game.user_id !== user.id) {
-            return this.dillerExitGame();
+            return this.onClose();
         }
+
+        this.dillerExitGame();
 
         game.status = 'result';
         await game.save();
@@ -424,7 +423,7 @@ class GameController {
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
         if (userGame) {
-            console.log('Drop the game: ', game.nice_id);
+            console.log('Drop the game by dillerExitGame: ', game.nice_id);
             await userGame.delete();
         }
 
@@ -439,7 +438,7 @@ class GameController {
 
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
-        if (userGame && game.user_id !== user.id) {
+        if (userGame) {
             console.log('Drop the game: ', game.nice_id);
             await userGame.delete();
         }
