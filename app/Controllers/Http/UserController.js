@@ -136,7 +136,7 @@ class UserController {
                 await user.save(trx);
             } else {
                 user = await User.create({ ...formPicked, token }, trx);
-                await user.reload();
+                // await user.reload();
             }
 
             // It's a player trying to connect into the game
