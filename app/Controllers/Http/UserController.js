@@ -62,8 +62,9 @@ class UserController {
 
             return response.json(camelize(res));
         }
+        console.log('game status ', game.status);
 
-        if (game_nice_id !== game.nice_id) {
+        if ((game_nice_id && game_nice_id !== game.nice_id) || game.status === 'result') {
             res = {
                 success: 1,
                 errors: {
@@ -110,68 +111,74 @@ class UserController {
         let user;
         let game;
 
-        const formPicked = _.pick(form, [
-            'first_name',
-            'last_name',
-            'is_observer',
-            'job',
-        ]);
+        try {
+            const formPicked = _.pick(form, [
+                'first_name',
+                'last_name',
+                'is_observer',
+                'job',
+            ]);
 
-        let errors = await User.validate(formPicked);
+            let errors = await User.validate(formPicked);
 
-        if (errors) {
-            return response.json(camelize({ errors }));
-        }
-
-        if (!token) {
-            token = uidgen.generateSync();
-        }
-
-        user = await User.findBy('token', token);
-
-        if (user) {
-            user.fill({ ...user.toJSON(), ...formPicked });
-            await user.save(trx);
-        } else {
-            user = await User.create({ ...formPicked, token }, trx);
-            await user.reload();
-        }
-
-        // It's a player trying to connect into the game
-        if (game_nice_id) {
-            game = await Game.findBy('nice_id', game_nice_id);
-
-            if (!game) {
-                errors = {
-                    game_nice_id: 'Wrong game ID!',
-                };
-
-                await trx.rollback();
-
+            if (errors) {
                 return response.json(camelize({ errors }));
             }
-        } else {
-            // it's Diller creating the new game
-            // create game with user_id
-            game = await Game.create({ user_id: user.id }, trx);
-            await game.save(trx);
-            await game.reload();
+
+            if (!token) {
+                token = uidgen.generateSync();
+            }
+
+            user = await User.findBy('token', token);
+
+            if (user) {
+                user.fill({ ...user.toJSON(), ...formPicked });
+                await user.save(trx);
+            } else {
+                user = await User.create({ ...formPicked, token }, trx);
+                await user.reload();
+            }
+
+            // It's a player trying to connect into the game
+            if (game_nice_id) {
+                game = await Game.findBy('nice_id', game_nice_id);
+
+                if (!game) {
+                    errors = {
+                        game_nice_id: 'Wrong game ID!',
+                    };
+
+                    await trx.rollback();
+
+                    return response.json(camelize({ errors }));
+                }
+            } else {
+                // it's Diller creating the new game
+                // create game with user_id
+
+                game = await Game.create({ user_id: user.id }, trx);
+                await game.save(trx);
+                // await game.reload();
+            }
+
+            user.is_diller = !game_nice_id;
+            await user.save(trx);
+            // await user.reload();
+
+            await trx.commit();
+
+            console.log('game.id', game.id);
+            console.log('game.nice_id', game.nice_id);
+
+            result = {
+                success: 1,
+                token,
+                roomId: game.nice_id, // game_nice_id === roomId
+            };
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
-
-        user.is_diller = !game_nice_id;
-        await user.save(trx);
-        await user.reload();
-
-        await trx.commit();
-
-        console.log('game.id', game.id);
-        console.log('game.nice_id', game.nice_id);
-
-        result = {
-            success: 1,
-            token,
-            roomId: game.nice_id, // game_nice_id === roomId
-        };
 
         return response.json(camelize(result));
     }

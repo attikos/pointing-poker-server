@@ -170,12 +170,12 @@ class GameController {
         const user = await this.getUser();
 
         if (game.user_id !== user.id) {
-            return this.onClose();
+            return this.dillerExitGame();
         }
 
         game.status = 'result';
         await game.save();
-        await game.reload();
+        // await game.reload();
 
         return this.sendFullData();
     }
@@ -279,7 +279,6 @@ class GameController {
 
         if (player) {
             await player.delete();
-            await player.reload();
 
             return this.sendFullData();
         }
@@ -418,13 +417,30 @@ class GameController {
     //     this.socket.broadcastToAll('members', camelize(members));
     // }
 
-    async onClose() {
+    async dillerExitGame() {
         const user = await User.findBy('token', this.token);
         const game = await Game.findBy('nice_id', this.roomId);
 
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
         if (userGame) {
+            console.log('Drop the game: ', game.nice_id);
+            await userGame.delete();
+        }
+
+        console.log('Diller was left game', this.socket.topic);
+
+        return this.sendFullData();
+    }
+
+    async onClose() {
+        const user = await User.findBy('token', this.token);
+        const game = await Game.findBy('nice_id', this.roomId);
+
+        const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
+
+        if (userGame && game.user_id !== user.id) {
+            console.log('Drop the game: ', game.nice_id);
             await userGame.delete();
         }
 
