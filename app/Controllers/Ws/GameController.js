@@ -348,6 +348,15 @@ class GameController {
         return this.sendFullData();
     }
 
+    async onSetAsObserver(flag) {
+        const user = await this.getUser();
+
+        user.is_observer = flag === undefined ? true : flag;
+        await user.save();
+
+        return this.sendFullData();
+    }
+
     // async onNewGame(data) {
     //     const trx = await Database.beginTransaction();
     //     const { form, game_nice_id } = decamelize(data);
