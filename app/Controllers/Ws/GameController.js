@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { camelize } = require('../../../utils/camelize');
+const { camelize, decamelize } = require('../../../utils/camelize');
 const { getRoomId } = require('../../../utils/getRoomId');
 
 const Database = use('Database');
@@ -229,7 +229,12 @@ class GameController {
         return false;
     }
 
-    async onSetIssueAsCurrent(flag) {
+    async onSetIssueAsCurrent(data) {
+        const params = _.pick(decamelize(data), [
+            'flag',
+            'issue_id',
+        ]);
+
         const game = await this.getGame();
         const user = await this.getUser();
 
@@ -237,13 +242,25 @@ class GameController {
             return false;
         }
 
-        const issue = Issue.first({ game_id: game.id, is_current: true, status: 'processing' });
+        if (!params.issue_id) {
+            return false;
+        }
+
+        const issue = await Issue.findBy('id', params.issue_id);
+
+        if (issue.game_id !== game.id) {
+            return false;
+        }
 
         if (!issue) {
             return false;
         }
 
-        issue.is_current = !!flag;
+        await Issue
+            .query()
+            .update({ is_current: 'false' });
+
+        issue.is_current = params.flag === undefined ? true : params.flag;
         await issue.save();
         await issue.reload();
 
@@ -259,11 +276,10 @@ class GameController {
         }
 
         const player = await User.findBy('nice_id', userNiceId);
-        // const user = await User.query(trx).where('username','virk).first()
 
         if (player) {
             await player.delete();
-            // await player.reload();
+            await player.reload();
 
             return this.sendFullData();
         }
@@ -275,7 +291,7 @@ class GameController {
         return false;
     }
 
-    async onAddIssue(form) {
+    async onAddIssue(form = {}) {
         const game = await this.getGame();
         const user = await this.getUser();
 
@@ -283,7 +299,7 @@ class GameController {
             return false;
         }
 
-        const formPicked = _.pick(form, [
+        const formPicked = _.pick(decamelize(form), [
             'title',
             'link',
             'is_current',
