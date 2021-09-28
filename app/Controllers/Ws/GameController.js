@@ -41,8 +41,6 @@ class GameController {
                 game_id: this.game.id,
             });
 
-            console.log('userGame:', userGame);
-
             if (!userGame && this.user && this.game) {
                 userGame = await UserGame.create({
                     user_id: this.user.id,
@@ -113,7 +111,6 @@ class GameController {
             .from('issues')
             .leftJoin('user_scores', 'issues.id', 'user_scores.issue_id')
             .where('issues.game_id', game_id)
-            .where('user_scores.score', '!=', null)
             .groupBy('user_scores.id');
 
         result.issues = await Database
@@ -230,17 +227,11 @@ class GameController {
         }
 
         const userScore = await UserScore.first({ issue_id: issue.id });
-        const issueStatus = userScore ? 'finished' : 'new';
 
-        if (userScore) {
-            issue.status = issueStatus;
-            await issue.save();
-            // await issue.reload();
+        issue.status = userScore ? 'finished' : 'new';
+        await issue.save();
 
-            return this.sendFullData();
-        }
-
-        return false;
+        return this.sendFullData();
     }
 
     async onSetIssueAsCurrent(data) {
@@ -274,9 +265,9 @@ class GameController {
             .query()
             .update({ is_current: 'false' });
 
+        await issue.reload();
         issue.is_current = params.flag === undefined ? true : params.flag;
         await issue.save();
-        // await issue.reload();
 
         return this.sendFullData();
     }
@@ -300,8 +291,28 @@ class GameController {
         return false;
     }
 
-    async onAddScore() {
-        return false;
+    async onAddScore(score) {
+        const game = await this.getGame();
+        const user = await this.getUser();
+        const issue = await Issue.findBy({
+            is_current: true,
+            game_id: game.id,
+        });
+
+        console.log('issue:', issue);
+        console.log('score', score);
+
+        const userScore = await UserScore.findOrCreate({
+            issue_id: issue.id,
+            user_id: user.id,
+            score,
+        });
+
+        userScore.save();
+
+        console.log('new userScore', userScore);
+
+        return this.sendFullData();
     }
 
     async onAddIssue(form = {}) {

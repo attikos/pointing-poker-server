@@ -75,6 +75,9 @@ class UserController {
             return response.json(camelize(res));
         }
 
+        user.is_diller = game.user_id === user.id;
+        await user.save();
+
         res = {
             success: 1,
             token,
@@ -142,7 +145,7 @@ class UserController {
                 await user.save(trx);
             }
 
-            // It's a player trying to connect into the game
+            // It's a player OR diller trying to connect into the game
             if (game_nice_id) {
                 game = await Game.findBy('nice_id', game_nice_id);
 
@@ -161,12 +164,10 @@ class UserController {
 
                 game = await Game.create({ user_id: user.id }, trx);
                 await game.save(trx);
-                // await game.reload();
             }
 
-            user.is_diller = !game_nice_id;
+            user.is_diller = game.user_id === user.id;
             await user.save(trx);
-            // await user.reload();
 
             await trx.commit();
 
