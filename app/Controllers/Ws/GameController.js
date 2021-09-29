@@ -111,6 +111,7 @@ class GameController {
             .from('issues')
             .leftJoin('user_scores', 'issues.id', 'user_scores.issue_id')
             .where('issues.game_id', game_id)
+            .where('issues.status', '!=', 'processing')
             .groupBy('user_scores.id');
 
         result.issues = await Database
@@ -119,11 +120,13 @@ class GameController {
             .where('game_id', game_id)
             .groupBy('issues.id');
 
-        result.usersIssues = {}; // TODO выпилить на фронте и здесь
-
         result.usersScores = {};
         result.scores.forEach((score) => {
-            result.usersScores[score.user_id] = score;
+            if (result.usersScores[score.user_id]) {
+                result.usersScores[score.user_id].push(score);
+            } else {
+                result.usersScores[score.user_id] = [score];
+            }
         });
 
         result.members = await this.getMembers(game_id);
@@ -169,26 +172,27 @@ class GameController {
         return this.sendFullData();
     }
 
-    async onCancelGame() {
+    async onleaveGame() {
+        this.onClose();
+    }
+
+    async onStopGame() {
         const game = await this.getGame();
         const user = await this.getUser();
 
         if (game.user_id !== user.id) {
-            return this.onClose();
+            return false;
+        }
+
+        if (game.status === 'lobby') {
+            await UserGame.query().where('game_id', game.id).delete();
+            await game.delete();
+            return this.socket.broadcastToAll('close');
         }
 
         game.status = 'result';
         await game.save();
-
-        const allData = await this.getAllData();
-
-        if (allData) {
-            this.socket.broadcast('all-data', camelize(allData));
-        }
-
-        this.socket.emit('close');
-
-        return true;
+        return this.sendFullData();
     }
 
     async onStartRound() {
@@ -204,7 +208,6 @@ class GameController {
         if (issue) {
             issue.status = 'processing';
             await issue.save();
-            // await issue.reload();
 
             return this.sendFullData();
         }
@@ -299,19 +302,27 @@ class GameController {
             game_id: game.id,
         });
 
-        console.log('issue:', issue);
-        console.log('score', score);
+        if (!issue || !score) {
+            return false;
+        }
 
-        const userScore = await UserScore.findOrCreate({
+        let userScore = await UserScore.findBy({
             issue_id: issue.id,
             user_id: user.id,
-            score,
         });
 
-        userScore.save();
+        if (!userScore) {
+            userScore = await UserScore.create({
+                issue_id: issue.id,
+                user_id: user.id,
+                score,
+            });
+        } else {
+            userScore.score = score;
+        }
 
-        console.log('new userScore', userScore);
-
+        await userScore.save();
+        await this.socket.emit('my-score', userScore);
         return this.sendFullData();
     }
 
@@ -338,7 +349,6 @@ class GameController {
             if (issue && issue.game_id === game.id) {
                 await issue.fill(formPicked);
                 await issue.save();
-                // await issue.reload();
             }
         } else {
             const issueParams = { ...formPicked, game_id: game.id };
@@ -346,7 +356,6 @@ class GameController {
             try {
                 const issue = await Issue.create(issueParams);
                 await issue.save();
-                // await issue.reload();
             } catch (error) {
                 console.error(error);
                 this.socket.emit('error', { addIssue: error });
@@ -383,74 +392,6 @@ class GameController {
         return this.sendFullData();
     }
 
-    // async onNewGame(data) {
-    //     const trx = await Database.beginTransaction();
-    //     const { form, game_nice_id } = decamelize(data);
-    //     let result = {};
-    //     let user;
-    //     let game;
-
-    //     let errors = User.validate(form);
-
-    //     if (errors) {
-    //         result = { errors };
-
-    //         this.socket.emit('newGame', camelize(result));
-    //     }
-
-    //     user = User.findBy('token', this.token);
-    //     const userParams = { ...form, token: this.token };
-
-    //     if (user) {
-    //         user.fill(userParams);
-    //         await user.save(trx);
-    //     } else {
-    //         user = await User.create(userParams, trx);
-    //         await user.reload();
-    //     }
-
-    //     // It's a Player
-    //     if (game_nice_id) {
-    //         game = Game.findBy('nice_id', game_nice_id);
-
-    //         if (!game) {
-    //             result = {
-    //                 errors: {
-    //                     game_nice_id: 'Wrong game ID!',
-    //                 },
-    //             };
-
-    //             await trx.rollback();
-
-    //             this.socket.emit('newGame', camelize(result));
-    //             return;
-    //         }
-    //     } else {
-    //         // it's a Diller
-    //         // create game with user_id
-    //         game = await Game.create({ user_id: user.id }, trx);
-    //         game.user_id = user.id;
-    //         await game.save();
-    //     }
-
-    //     // get a new members
-    //     const members = await UserGame
-    //         .query(trx)
-    //         .where('game_id', game.id)
-    //         .fetch();
-
-    //     console.log('members toJSON', members.toJSON());
-
-    //     result = {
-    //         success: 1,
-    //     };
-
-    //     await trx.commit();
-
-    //     this.socket.emit('newGame', camelize(result));
-    //     this.socket.broadcastToAll('members', camelize(members));
-    // }
-
     async dillerExitGame() {
         const user = await User.findBy('token', this.token);
         const game = await Game.findBy('nice_id', this.roomId);
@@ -474,12 +415,13 @@ class GameController {
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
         if (userGame) {
-            console.log('Drop the game: ', game.nice_id);
+            console.log('Drop the user from game: ', game.nice_id);
             await userGame.delete();
         }
 
         console.log('Closing subscription for room topic', this.socket.topic);
 
+        await this.socket.emit('close');
         return this.sendFullData();
     }
 }
