@@ -203,7 +203,7 @@ class GameController {
             return false;
         }
 
-        const issue = Issue.first({ game_id: game.id, is_current: true });
+        const issue = await Issue.findBy({ game_id: game.id, is_current: true });
 
         if (issue) {
             issue.status = 'processing';
@@ -223,13 +223,13 @@ class GameController {
             return false;
         }
 
-        const issue = Issue.first({ game_id: game.id, is_current: true, status: 'processing' });
+        const issue = await Issue.findBy({ game_id: game.id, is_current: true, status: 'processing' });
 
         if (!issue) {
             return false;
         }
 
-        const userScore = await UserScore.first({ issue_id: issue.id });
+        const userScore = await UserScore.findBy('issue_id', issue.id);
 
         issue.status = userScore ? 'finished' : 'new';
         await issue.save();
