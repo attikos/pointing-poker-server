@@ -135,28 +135,30 @@ class GameController {
     }
 
     async sendFullData() {
-        const result = await this.getAllData();
+        const result = await this.getAllData() || {};
+        const user = await this.getUser(true);
 
         if (!result) {
             return;
         }
 
         this.socket.broadcastToAll('all-data', camelize(result));
+        this.socket.emit('user', camelize(user));
     }
 
     onGetAllData() {
         this.sendFullData();
     }
 
-    async onGetUser() {
-        const result = await this.getUser(true);
+    // async onGetUser() {
+    //     const result = await this.getUser(true);
 
-        if (!result) {
-            return;
-        }
+    //     if (!result) {
+    //         return;
+    //     }
 
-        this.socket.emit('user', camelize(result));
-    }
+    //     this.socket.emit('user', camelize(result));
+    // }
 
     async onStartGame() {
         const game = await this.getGame();
@@ -386,7 +388,11 @@ class GameController {
     async onSetAsObserver(flag) {
         const user = await this.getUser();
 
-        user.is_observer = flag === undefined ? true : flag;
+        if (!user) {
+            return false;
+        }
+
+        user.is_observer = !!flag;
         await user.save();
 
         return this.sendFullData();

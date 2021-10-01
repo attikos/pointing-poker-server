@@ -21,6 +21,15 @@ class UserController {
         let { game_nice_id, token } = decamelize(request.all());
         let res;
 
+        if (!game_nice_id) {
+            res = {
+                success: 1,
+                errors: {},
+            };
+
+            return response.json(camelize(res));
+        }
+
         if (!token) {
             res = {
                 success: 1,
@@ -64,7 +73,7 @@ class UserController {
         }
         console.log('game status ', game.status);
 
-        if ((game_nice_id && game_nice_id !== game.nice_id) || game.status === 'result') {
+        if ((game_nice_id && game_nice_id !== game.nice_id)) {
             res = {
                 success: 1,
                 errors: {
