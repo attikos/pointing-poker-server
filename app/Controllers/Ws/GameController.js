@@ -88,7 +88,8 @@ class GameController {
             .from('users')
             .leftJoin('user_games', 'users.id', 'user_games.user_id')
             .where('user_games.game_id', game_id)
-            .groupBy('users.id');
+            .groupBy('users.id')
+            .orderBy('users.id');
     }
 
     async getAllData() {
@@ -112,13 +113,15 @@ class GameController {
             .leftJoin('user_scores', 'issues.id', 'user_scores.issue_id')
             .where('issues.game_id', game_id)
             .where('issues.status', '!=', 'processing')
-            .groupBy('user_scores.id');
+            .groupBy('user_scores.id')
+            .orderBy('user_scores.id');
 
         result.issues = await Database
             .select('*')
             .from('issues')
             .where('game_id', game_id)
-            .groupBy('issues.id');
+            .groupBy('issues.id')
+            .orderBy('issues.id');
 
         result.usersScores = {};
         result.scores.forEach((score) => {
@@ -187,6 +190,8 @@ class GameController {
         }
 
         if (game.status === 'lobby') {
+            // await Message.query().where('game_id', game.id).delete();
+            await Issue.query().where('game_id', game.id).delete();
             await UserGame.query().where('game_id', game.id).delete();
             await game.delete();
             return this.socket.broadcastToAll('close');
@@ -268,7 +273,9 @@ class GameController {
 
         await Issue
             .query()
-            .update({ is_current: 'false' });
+            .where('game_id', game.id)
+            .where('is_current', true)
+            .update({ is_current: false });
 
         await issue.reload();
         issue.is_current = params.flag === undefined ? true : params.flag;
@@ -323,7 +330,35 @@ class GameController {
             userScore.score = score;
         }
 
+        if (userScore.status === 'finished') {
+            console.log('add score not available, because it has status is finished');
+            return false;
+        }
+
+        const userCount = await Database
+            .select('users.*')
+            .from('users')
+            .leftJoin('user_games', 'users.id', 'user_games.user_id')
+            .where('user_games.game_id', game.id)
+            .where('users.is_observer', false)
+            .groupBy('users.id')
+            .count();
+
+        const scoreCount = await UserScore
+            .query()
+            .where('issue_id', issue.id)
+            .count();
+
+        console.log('userCount', userCount);
+        console.log('scoreCount', scoreCount);
+
+        if (userCount <= scoreCount) {
+            userScore.status = 'finished';
+        }
+
         await userScore.save();
+
+        // Get all users in game which no observer and no voited
         await this.socket.emit('my-score', userScore);
         return this.sendFullData();
     }
