@@ -212,14 +212,19 @@ class GameController {
 
         const issue = await Issue.findBy({ game_id: game.id, is_current: true });
 
-        if (issue) {
-            issue.status = 'processing';
-            await issue.save();
-
-            return this.sendFullData();
+        if (issue && issue.status !== 'processing') {
+            return false;
         }
 
-        return false;
+        await UserScore
+            .query()
+            .where('issue_id', issue.id)
+            .delete();
+
+        issue.status = 'processing';
+        await issue.save();
+
+        return this.sendFullData();
     }
 
     async onStopRound() {
@@ -293,9 +298,10 @@ class GameController {
         }
 
         const player = await User.findBy('nice_id', userNiceId);
+        const userGame = await UserGame.findBy({ user_id: player.id, game_id: game.id });
 
-        if (player) {
-            await player.delete();
+        if (userGame) {
+            await userGame.delete();
 
             return this.sendFullData();
         }
@@ -342,21 +348,19 @@ class GameController {
             .where('user_games.game_id', game.id)
             .where('users.is_observer', false)
             .groupBy('users.id')
-            .count();
+            .getCount();
 
         const scoreCount = await UserScore
             .query()
             .where('issue_id', issue.id)
-            .count();
-
-        console.log('userCount', userCount);
-        console.log('scoreCount', scoreCount);
+            .getCount();
 
         if (userCount <= scoreCount) {
-            userScore.status = 'finished';
+            console.log('set finished issue id:', issue.id);
+            issue.status = 'finished';
         }
 
-        await userScore.save();
+        await issue.save();
 
         // Get all users in game which no observer and no voited
         await this.socket.emit('my-score', userScore);
