@@ -303,6 +303,7 @@ class GameController {
         if (userGame) {
             await userGame.delete();
 
+            this.socket.broadcastToAll('user-dropped', player.nice_id);
             return this.sendFullData();
         }
 
