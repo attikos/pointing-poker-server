@@ -149,6 +149,18 @@ class GameController {
         this.socket.emit('user', camelize(user));
     }
 
+    async broadcastFullData() {
+        const result = await this.getAllData() || {};
+        const user = await this.getUser(true);
+
+        if (!result) {
+            return;
+        }
+
+        await this.socket.broadcast('all-data', camelize(result));
+        await this.socket.emit('user', camelize(user));
+    }
+
     onGetAllData() {
         this.sendFullData();
     }
@@ -212,7 +224,7 @@ class GameController {
 
         const issue = await Issue.findBy({ game_id: game.id, is_current: true });
 
-        if (issue && issue.status !== 'processing') {
+        if (issue && issue.status === 'processing') {
             return false;
         }
 
@@ -301,10 +313,13 @@ class GameController {
         const userGame = await UserGame.findBy({ user_id: player.id, game_id: game.id });
 
         if (userGame) {
-            await userGame.delete();
-
-            this.socket.broadcastToAll('user-dropped', player.nice_id);
-            return this.sendFullData();
+            try {
+                await userGame.delete();
+                await this.broadcastFullData();
+                return this.socket.broadcastToAll('user-dropped', player.nice_id);
+            } catch (error) {
+                console.log(error);
+            }
         }
 
         return false;
