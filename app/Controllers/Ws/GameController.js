@@ -154,8 +154,8 @@ class GameController {
 
         const user = await this.getUser(true);
 
-        this.socket.broadcastToAll('all-data', camelize(result));
-        this.socket.emit('user', camelize(user));
+        await this.socket.broadcastToAll('all-data', camelize(result));
+        await this.socket.emit('user', camelize(user));
     }
 
     async broadcastFullData() {
@@ -328,7 +328,7 @@ class GameController {
         if (userGame) {
             try {
                 await userGame.delete();
-                await this.broadcastFullData();
+                await this.sendFullData();
                 return this.socket.broadcastToAll('user-dropped', player.nice_id);
             } catch (error) {
                 console.log(error);
@@ -464,19 +464,6 @@ class GameController {
         return this.sendFullData();
     }
 
-    async dillerExitGame() {
-        const user = await User.findBy('token', this.token);
-        const game = await Game.findBy('nice_id', this.roomId);
-
-        const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
-
-        if (userGame) {
-            await userGame.delete();
-        }
-
-        return this.sendFullData();
-    }
-
     async onClose() {
         const user = await User.findBy('token', this.token);
         const game = await Game.findBy('nice_id', this.roomId);
@@ -487,8 +474,8 @@ class GameController {
             await userGame.delete();
         }
 
-        await this.socket.emit('close');
-        return this.sendFullData();
+        await this.sendFullData();
+        this.socket.emit('close');
     }
 }
 

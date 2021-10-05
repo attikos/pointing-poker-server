@@ -9,7 +9,6 @@ class CustomAuth {
      * @param {Function} next
      */
     async handle(ctx, next) {
-        // call next to advance the request
         await next();
     }
 
@@ -21,19 +20,10 @@ class CustomAuth {
     async wsHandle(ctx, next) {
         const { token } = ctx.request.get();
 
-        console.log('token 2 ', token);
-
-        // ctx.auth = {
-        //     token
-        // }
-
         ctx.token = token;
 
         if (!token) {
             console.error('Token not found');
-
-            // throw new Exception('There is no concept of login in auth', 401);
-            // return;
         }
 
         await next();
