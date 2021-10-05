@@ -8,6 +8,7 @@ const Game = use('App/Models/Game');
 const UserGame = use('App/Models/UserGame');
 const UserScore = use('App/Models/UserScore');
 const Issue = use('App/Models/Issue');
+const Message = use('App/Models/Message');
 
 class GameController {
     constructor({
@@ -52,6 +53,14 @@ class GameController {
             console.error(error);
             throw error;
         }
+    }
+
+    getMessages(game_id) {
+        return Database
+            .select('messages.*')
+            .from('messages')
+            .where('messages.game_id', game_id)
+            .groupBy('messages.id');
     }
 
     async getUser(isJson) {
@@ -133,17 +142,19 @@ class GameController {
         });
 
         result.members = await this.getMembers(game_id);
+        result.messages = await this.getMessages(game_id);
 
         return result;
     }
 
     async sendFullData() {
         const result = await this.getAllData() || {};
-        const user = await this.getUser(true);
 
         if (!result) {
             return;
         }
+
+        const user = await this.getUser(true);
 
         this.socket.broadcastToAll('all-data', camelize(result));
         this.socket.emit('user', camelize(user));
@@ -202,7 +213,7 @@ class GameController {
         }
 
         if (game.status === 'lobby') {
-            // await Message.query().where('game_id', game.id).delete();
+            await Message.query().where('game_id', game.id).delete();
             await Issue.query().where('game_id', game.id).delete();
             await UserGame.query().where('game_id', game.id).delete();
             await game.delete();
@@ -259,6 +270,20 @@ class GameController {
         await issue.save();
 
         return this.sendFullData();
+    }
+
+    async onSendMessage(message) {
+        if (!message) {
+            return;
+        }
+
+        const game = await this.getGame();
+        const user = await this.getUser();
+
+        const messageRs = await Message.create({ message, game_id: game.id, user_id: user.id });
+        await messageRs.save();
+
+        this.sendFullData();
     }
 
     async onSetIssueAsCurrent(data) {
