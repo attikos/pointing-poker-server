@@ -28,8 +28,6 @@ class GameController {
     }
 
     async userConnected() {
-        console.log('userConnected');
-
         try {
             const game = await this.getGame();
             const user = await this.getUser();
@@ -175,16 +173,6 @@ class GameController {
     onGetAllData() {
         this.sendFullData();
     }
-
-    // async onGetUser() {
-    //     const result = await this.getUser(true);
-
-    //     if (!result) {
-    //         return;
-    //     }
-
-    //     this.socket.emit('user', camelize(result));
-    // }
 
     async onStartGame() {
         const game = await this.getGame();
@@ -378,7 +366,6 @@ class GameController {
         }
 
         if (userScore.status === 'finished') {
-            console.log('add score not available, because it has status is finished');
             return false;
         }
 
@@ -397,7 +384,6 @@ class GameController {
             .getCount();
 
         if (userCount <= scoreCount) {
-            console.log('set finished issue id:', issue.id);
             issue.status = 'finished';
         }
 
@@ -485,11 +471,8 @@ class GameController {
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
         if (userGame) {
-            console.log('Drop the game by dillerExitGame: ', game.nice_id);
             await userGame.delete();
         }
-
-        console.log('Diller was left game', this.socket.topic);
 
         return this.sendFullData();
     }
@@ -501,11 +484,8 @@ class GameController {
         const userGame = await UserGame.findBy({ user_id: user.id, game_id: game.id });
 
         if (userGame) {
-            console.log('Drop the user from game: ', game.nice_id);
             await userGame.delete();
         }
-
-        console.log('Closing subscription for room topic', this.socket.topic);
 
         await this.socket.emit('close');
         return this.sendFullData();

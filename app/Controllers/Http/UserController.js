@@ -54,30 +54,13 @@ class UserController {
             return response.json(camelize(res));
         }
 
-        let gameParams = { user_id: user.id };
-        if (game_nice_id) {
-            gameParams.nice_id = game_nice_id;
-        }
-
-        let game = await Game.findBy(gameParams);
+        const game = await Game.findBy({ nice_id: game_nice_id });
 
         if (!game) {
             res = {
                 success: 1,
                 errors: {
-                    game_nice_id: 'Session not found',
-                },
-            };
-
-            return response.json(camelize(res));
-        }
-        console.log('game status ', game.status);
-
-        if ((game_nice_id && game_nice_id !== game.nice_id)) {
-            res = {
-                success: 1,
-                errors: {
-                    game_nice_id: 'Wrong Game ID',
+                    game_nice_id: `Game with id ${game_nice_id} not found`,
                 },
             };
 
@@ -92,8 +75,6 @@ class UserController {
             token,
             roomId: game.nice_id, // game_nice_id === roomId
         };
-
-        console.log('game restored');
 
         return response.json(camelize(res));
     }
@@ -150,7 +131,6 @@ class UserController {
                 await user.save(trx);
             } else {
                 user = await User.create({ ...formPicked, token }, trx);
-                // await user.reload();
                 await user.save(trx);
             }
 
@@ -179,9 +159,6 @@ class UserController {
             await user.save(trx);
 
             await trx.commit();
-
-            console.log('game.id', game.id);
-            console.log('game.nice_id', game.nice_id);
 
             result = {
                 success: 1,
